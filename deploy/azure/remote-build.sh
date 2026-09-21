@@ -16,6 +16,17 @@ fi
 
 cd "${TARGET}"
 
+# Oryx leftover: extracts node_modules.tar.gz to /node_modules and
+# ln -sfn /node_modules ./node_modules. pnpm 12 refuses that symlink.
+rm -f node_modules.tar.gz
+if [[ -L node_modules ]]; then
+  echo "removing node_modules symlink -> $(readlink node_modules)"
+  rm -f node_modules
+fi
+if [[ -e node_modules && ! -d node_modules ]]; then
+  rm -f node_modules
+fi
+
 export CI=true
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 export NODE_ENV="${NODE_ENV:-production}"
