@@ -24,7 +24,7 @@ jobs:
         run: |
           pnpm install
           pnpm build
-          pnpm --filter @cmp/api deploy --prod ./azure-api
+          pnpm deploy --prod ./azure-api
           SCHEMA="$(find ./azure-api/node_modules -path '*/@cmp/database/prisma/schema.prisma' -print -quit)"
           test -n "$SCHEMA"
           SRC_CLIENT="$(find node_modules/.pnpm -type d -path '*@prisma+client@*/node_modules/.prisma/client' | head -1)"

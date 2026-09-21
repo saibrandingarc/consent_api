@@ -14,7 +14,7 @@ async function loadPlaywright() {
     return await import('playwright');
   } catch {
     throw new Error(
-      'Playwright is not installed. Local dev: pnpm --filter @cmp/api playwright:install. Cloud Run: redeploy API image with Playwright browsers.',
+      'Playwright is not installed. Local dev: pnpm playwright:install. Azure: install Playwright browsers on the API app if scans run there.',
     );
   }
 }

@@ -38,6 +38,8 @@ rm -rf "${OUT}"
 mkdir -p "${OUT}"
 test -d "${ROOT}/azure-api"
 cp -a "${ROOT}/azure-api/." "${OUT}/"
+rm -rf "${OUT}/dist"
+cp -a "${ROOT}/dist" "${OUT}/dist"
 copy_real_pkg tslib "${OUT}/node_modules"
 cat > "${OUT}/package.json" <<'EOF'
 {

@@ -1,9 +1,9 @@
 /**
  * Local probe: same scanner path as production homepage scans.
- * Usage: pnpm --filter @cmp/api scan:homepage-probe -- https://varnarc.com/
+ * Usage: pnpm scan:homepage-probe -- https://varnarc.com/
  * (pnpm may pass a literal "--" argument; the script skips it.)
  *
- * First time: pnpm --filter @cmp/api playwright:install
+ * First time: pnpm playwright:install
  */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
