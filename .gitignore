@@ -11,4 +11,5 @@ coverage
 tmp
 azure-api
 azure-site-api
+azure-source
 .DS_Store

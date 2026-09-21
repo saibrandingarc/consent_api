@@ -24,4 +24,12 @@ pnpm dev   # http://localhost:4000/api/v1
 Node **22** Linux Web App `consentapi`:
 https://consentapi-abgrbph5cfccbxe0.eastus2-01.azurewebsites.net
 
+GitHub Actions zips **source only**. The app installs and compiles on App Service (`pnpm install` + `pnpm build`). Set these application settings (see `deploy/azure/env.example`):
+
+- `ENABLE_ORYX_BUILD=true`
+- `SCM_DO_BUILD_DURING_DEPLOYMENT=true`
+- `CUSTOM_BUILD_COMMAND=bash deploy/azure/remote-build.sh`
+- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`
+- Startup command: `node host.js`
+
 Secret `AZUREAPPSERVICE_PUBLISHPROFILE`. App name default `consentapi`.
