@@ -1,12 +1,8 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
+# Azure Portal auto-generated workflow. Disabled on push so it does not
+# overwrite consent_api's pnpm zip (see azure.yml). This repo is the API only.
 name: Build and deploy Node.js app to Azure Web App - consentapi
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:

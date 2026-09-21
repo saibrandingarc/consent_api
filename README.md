@@ -1,6 +1,6 @@
 # consent_api
 
-Independent NestJS API. **consent_web** and **consent_admin** call this service; they are not bundled with it.
+Independent NestJS API in its own GitHub repo and Azure App Service (`consentapi`). **consent_web** and **consent_admin** call it over HTTP only; they are not built or deployed with this app.
 
 Set these App Service settings so CORS allows the two UIs:
 

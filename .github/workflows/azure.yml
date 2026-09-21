@@ -42,4 +42,4 @@ jobs:
         with:
           app-name: ${{ vars.AZURE_API_APP || 'consentapi' }}
           package: azure-site-api
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE || secrets.AZUREAPPSERVICE_PUBLISHPROFILE_38665C48D1084237BBB1F8D29CABCDFB }}
