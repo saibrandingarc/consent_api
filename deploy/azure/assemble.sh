@@ -88,11 +88,12 @@ deref_node_modules "${OUT}"
 while IFS= read -r dep; do
   [[ -z "${dep}" ]] && continue
   copy_pkg_tree "${dep}"
-done < <(node -e 'const p=require(process.argv[1]); Object.keys(p.dependencies||{}).forEach((k)=>{ if(!k.startsWith("@cmp/")) console.log(k); });' "${ROOT}/package.json")
+done < <(node -e 'const p=require(process.argv[1]); Object.keys(p.dependencies||{}).forEach((k)=>{ if(!k.startsWith("@cmp/") && k!=="playwright") console.log(k); });' "${ROOT}/package.json")
 
 copy_pkg_tree uid
 copy_pkg_tree tslib
 copy_pkg_tree @prisma/client
+rm -rf "${OUT}/node_modules/playwright" "${OUT}/node_modules/playwright-core" "${OUT}/node_modules/@playwright"
 
 SRC_CLIENT="$(find "${ROOT}/node_modules/.pnpm" -type d -path '*@prisma+client@*/node_modules/.prisma/client' | head -1 || true)"
 if [[ -n "${SRC_CLIENT}" ]]; then
@@ -101,12 +102,13 @@ if [[ -n "${SRC_CLIENT}" ]]; then
   cp -R "${SRC_CLIENT}" "${OUT}/node_modules/.prisma/client"
 fi
 
+cp -a "${ROOT}/host.js" "${OUT}/host.js"
 cat > "${OUT}/package.json" <<'EOF'
 {
   "name": "consent_api",
   "private": true,
   "author": "saibrandingarc",
-  "scripts": { "start": "node dist/main.js" },
+  "scripts": { "start": "node host.js" },
   "engines": { "node": "22.x" }
 }
 EOF
@@ -124,6 +126,7 @@ NodeVersion="22"
 CompressDestinationDir="true"
 EOF
 
+test -f "${OUT}/host.js"
 test -f "${OUT}/dist/main.js"
 test -f "${OUT}/node_modules/@nestjs/core/package.json"
 test -d "${OUT}/node_modules/uid"
