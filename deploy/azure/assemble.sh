@@ -13,12 +13,28 @@ EOF
   rm -f "${dir}/.gitignore"
 }
 
+pnpm_store_prefix() {
+  local name="$1"
+  if [[ "${name}" == @*/* ]]; then
+    echo "${name/\//+}"
+  else
+    echo "${name}"
+  fi
+}
+
 copy_real_pkg() {
   local name="$1"
   local dest_parent="$2"
   local optional="${3:-}"
   local pkg_json
-  pkg_json="$(find "${ROOT}/node_modules/.pnpm" -path "*/node_modules/${name}/package.json" | head -1 || true)"
+  local prefix
+  prefix="$(pnpm_store_prefix "${name}")"
+  # Prefer the package's own .pnpm folder so a nested v2 copy (e.g. under
+  # @exodus/bytes) does not overwrite pdfkit's @noble/hashes v1 ./utils export.
+  pkg_json="$(find "${ROOT}/node_modules/.pnpm" -path "*/.pnpm/${prefix}@*/node_modules/${name}/package.json" | sort -V | head -1 || true)"
+  if [[ -z "${pkg_json}" ]]; then
+    pkg_json="$(find "${ROOT}/node_modules/.pnpm" -path "*/node_modules/${name}/package.json" | head -1 || true)"
+  fi
   if [[ -z "${pkg_json}" ]]; then
     if [[ -n "${optional}" ]]; then
       echo "skip missing optional ${name}"
@@ -95,6 +111,7 @@ copy_pkg_tree tslib
 copy_pkg_tree @prisma/client
 copy_pkg_tree @prisma/adapter-mssql
 copy_pkg_tree mssql
+copy_real_pkg "@noble/hashes" "${OUT}/node_modules"
 rm -rf "${OUT}/node_modules/playwright" "${OUT}/node_modules/playwright-core" "${OUT}/node_modules/@playwright"
 
 SRC_CLIENT="$(find "${ROOT}/node_modules/.pnpm" -type d -path '*@prisma+client@*/node_modules/.prisma/client' | head -1 || true)"
@@ -133,5 +150,6 @@ test -f "${OUT}/dist/main.js"
 test -f "${OUT}/node_modules/@nestjs/core/package.json"
 test -d "${OUT}/node_modules/uid"
 test -f "${OUT}/node_modules/@prisma/adapter-mssql/package.json"
+NODE_PATH="${OUT}/node_modules" node -e 'require("@noble/hashes/utils")'
 test -f "${OUT}/node_modules.tar.gz"
 echo "assembled ${OUT}"
