@@ -14,7 +14,19 @@ import helmet from 'helmet';
 import { API_CONFIG } from '@cmp/config';
 import { AppModule } from './app.module';
 
+function assertRuntimeEnv() {
+  const missing = ['CM_DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'].filter(
+    (key) => !process.env[key]?.trim(),
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing App Service settings: ${missing.join(', ')}. Set them on consentapi and restart.`,
+    );
+  }
+}
+
 async function bootstrap() {
+  assertRuntimeEnv();
   const app = await NestFactory.create(AppModule);
 
   app.use(
