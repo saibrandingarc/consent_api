@@ -1,0 +1,69 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
+WORKDIR /app
+
+FROM base AS pruner
+COPY . .
+RUN pnpm dlx turbo@2.10.7 prune @cmp/api --docker
+
+FROM base AS deps
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
+COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/tsconfig.base.json ./tsconfig.base.json
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN apk add --no-cache openssl libc6-compat ca-certificates
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @cmp/database generate
+RUN pnpm --filter @cmp/types build
+RUN pnpm --filter @cmp/auth build
+RUN pnpm --filter @cmp/database build
+RUN pnpm --filter @cmp/sdk build
+RUN pnpm --filter @cmp/api... build
+RUN pnpm --filter @cmp/api deploy --prod /prod/api
+RUN SCHEMA="$(find /prod/api/node_modules -path '*/@cmp/database/prisma/schema.prisma' -print -quit)" && \
+    test -n "$SCHEMA" && \
+    pnpm exec prisma generate --schema="$SCHEMA"
+
+FROM mcr.microsoft.com/playwright:v1.62.0-noble AS playwright-browsers
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+COPY --from=builder --chown=nestjs:nodejs /prod/api ./
+COPY --chown=nestjs:nodejs deploy/migrate.sh ./deploy/migrate.sh
+COPY --chown=nestjs:nodejs deploy/start-api.sh ./start-api.sh
+RUN chmod +x ./deploy/migrate.sh ./start-api.sh
+
+# Browsers must match the playwright npm version in node_modules (see pnpm-lock.yaml).
+COPY --from=playwright-browsers /ms-playwright /ms-playwright
+
+# Prisma client is generated in the builder (includes debian-openssl-3.0.x binary).
+# pnpm deploy may hoist playwright under .pnpm; resolve cli.js reliably.
+RUN PW_CLI="$(find /app/node_modules -path '*/playwright/cli.js' -not -path '*/@playwright/*' | head -1)" && \
+    test -n "$PW_CLI" && \
+    node "$PW_CLI" install-deps chromium && \
+    find /ms-playwright -maxdepth 1 -name 'chromium_headless_shell-*' -type d | grep -q . && \
+    chown -R nestjs:nodejs /ms-playwright
+
+USER nestjs
+EXPOSE 8080
+CMD ["./start-api.sh"]

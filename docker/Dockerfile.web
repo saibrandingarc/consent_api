@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
+WORKDIR /app
+
+FROM base AS pruner
+COPY . .
+RUN pnpm dlx turbo@2.10.7 prune @cmp/web --docker
+
+FROM base AS deps
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
+COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/tsconfig.base.json ./tsconfig.base.json
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --frozen-lockfile
+
+ARG NEXT_PUBLIC_ADMIN_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_AUTH0_CONFIGURED=true
+ARG NEXT_PUBLIC_AUTH0_CLIENT_ID
+ARG AUTH0_DOMAIN
+ARG AUTH0_AUDIENCE
+ENV NEXT_PUBLIC_ADMIN_URL=$NEXT_PUBLIC_ADMIN_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_AUTH0_CONFIGURED=$NEXT_PUBLIC_AUTH0_CONFIGURED
+ENV NEXT_PUBLIC_AUTH0_CLIENT_ID=$NEXT_PUBLIC_AUTH0_CLIENT_ID
+ENV AUTH0_DOMAIN=$AUTH0_DOMAIN
+ENV AUTH0_AUDIENCE=$AUTH0_AUDIENCE
+
+RUN pnpm --filter @cmp/web... build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+
+USER nextjs
+EXPOSE 8080
+CMD ["node", "apps/web/server.js"]

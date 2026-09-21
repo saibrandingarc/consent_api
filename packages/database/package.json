@@ -1,0 +1,41 @@
+{
+  "name": "@cmp/database",
+  "version": "0.1.0",
+  "private": true,
+  "author": "saibrandingarc",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "generate": "prisma generate --schema=prisma/schema.prisma",
+    "migrate:dev": "prisma migrate dev --schema=prisma/schema.prisma",
+    "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "seed": "pnpm run build && tsx --env-file=../../.env src/seed.ts",
+    "import:postgres": "tsx --env-file=../../.env scripts/import-postgres.ts"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "pnpm run build && node dist/seed.js"
+  },
+  "dependencies": {
+    "@cmp/auth": "workspace:*",
+    "@prisma/client": "7.10.0",
+    "mssql": "^12.7.2",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/pg": "^8.23.1",
+    "prisma": "7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

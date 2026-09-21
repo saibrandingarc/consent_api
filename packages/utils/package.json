@@ -1,0 +1,29 @@
+{
+  "name": "@cmp/utils",
+  "version": "0.1.0",
+  "private": true,
+  "author": "saibrandingarc",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./banner-templates": {
+      "types": "./dist/banner-templates.d.ts",
+      "default": "./dist/banner-templates.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

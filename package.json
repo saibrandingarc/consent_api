@@ -1,0 +1,24 @@
+{
+  "name": "consent_api",
+  "version": "0.1.0",
+  "private": true,
+  "author": "saibrandingarc",
+  "description": "Consent Management NestJS API",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @cmp/api dev",
+    "build": "pnpm --filter @cmp/types build && pnpm --filter @cmp/config build && pnpm --filter @cmp/utils build && pnpm --filter @cmp/validation build && pnpm --filter @cmp/auth build && pnpm --filter @cmp/sdk build && pnpm --filter @cmp/database generate && pnpm --filter @cmp/database build && pnpm --filter @cmp/api build",
+    "start": "pnpm --filter @cmp/api start",
+    "db:generate": "pnpm --filter @cmp/database generate",
+    "db:migrate": "pnpm --filter @cmp/database migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @cmp/database migrate:deploy",
+    "db:seed": "pnpm --filter @cmp/database seed"
+  },
+  "devDependencies": {
+    "prisma": "7.10.0",
+    "typescript": "^7.0.2"
+  }
+}

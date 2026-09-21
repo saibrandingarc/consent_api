@@ -1,0 +1,14 @@
+node_modules
+dist
+.next
+.turbo
+out
+.env
+.env.local
+*.log
+*.tsbuildinfo
+coverage
+tmp
+azure-api
+azure-site-api
+.DS_Store
