@@ -208,6 +208,9 @@ importers:
       '@nestjs/throttler':
         specifier: ^6.7.0
         version: 6.7.0(@nestjs/common@12.0.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.3)(reflect-metadata@0.2.2)
+      '@prisma/adapter-mssql':
+        specifier: 7.10.0
+        version: 7.10.0
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -315,6 +318,9 @@ importers:
       '@cmp/auth':
         specifier: workspace:*
         version: link:../auth
+      '@prisma/adapter-mssql':
+        specifier: 7.10.0
+        version: 7.10.0
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -1051,6 +1057,9 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
+  '@prisma/adapter-mssql@7.10.0':
+    resolution: {integrity: sha512-WR1r7RuomidJaIDKemFwuZzPD2wy1M5dltP8wJM9ABsVCAKPyTT8HSmrWQ/FR+VRFolvxofwO7hwHi9cQ9GUQA==}
+
   '@prisma/client-runtime-utils@7.10.0':
     resolution: {integrity: sha512-cnCy7lUV8/CctgKVEmqAbSLAmwqJdE/qAlqTBk/0NDk59zEb2cZ0M0M0E4vVPnqbSEYudRroQDvOWfUZH6RIfw==}
 
@@ -1077,6 +1086,9 @@ packages:
 
   '@prisma/dev@0.24.17':
     resolution: {integrity: sha512-UvdZzmpFwknnfreh6Jije84ekkYGPYEJhXG1tFzCsCfQyzJifrOo38eZc0qajzvaC6OLUOrN9ML5XfCnEZL9DA==}
+
+  '@prisma/driver-adapter-utils@7.10.0':
+    resolution: {integrity: sha512-u8zkcRLlaryO652T4qavBg0HmzNW5tSKdsCn6hc1PhWAp/J6k0vrxLuUs+b9o+HcjsK7Dfa01o4OFSn0frauJA==}
 
   '@prisma/engines-version@7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3':
     resolution: {integrity: sha512-8OJ6RuZTZ06eFUOtBwxVmv8XMmOW6HWN5F+uxUbZkGxR0Bfab1dfAdXaHPmR5mb59E+fmUo8IOzXlbLY1SClbw==}
@@ -1519,6 +1531,9 @@ packages:
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
+
+  async-mutex@0.5.0:
+    resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
 
   aws-ssl-profiles@1.1.2:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
@@ -3673,6 +3688,14 @@ snapshots:
     dependencies:
       playwright: 1.63.0
 
+  '@prisma/adapter-mssql@7.10.0':
+    dependencies:
+      '@prisma/driver-adapter-utils': 7.10.0
+      async-mutex: 0.5.0
+      mssql: 12.7.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@prisma/client-runtime-utils@7.10.0': {}
 
   '@prisma/client@7.10.0(prisma@7.10.0(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@5.9.3))(typescript@5.9.3)':
@@ -3714,6 +3737,10 @@ snapshots:
       zeptomatch: 2.1.0
     transitivePeerDependencies:
       - typescript
+
+  '@prisma/driver-adapter-utils@7.10.0':
+    dependencies:
+      '@prisma/debug': 7.10.0
 
   '@prisma/engines-version@7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3': {}
 
@@ -4158,6 +4185,10 @@ snapshots:
   array-timsort@1.0.3: {}
 
   assertion-error@2.0.1: {}
+
+  async-mutex@0.5.0:
+    dependencies:
+      tslib: 2.8.1
 
   aws-ssl-profiles@1.1.2: {}
 

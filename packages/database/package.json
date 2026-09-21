@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@cmp/auth": "workspace:*",
+    "@prisma/adapter-mssql": "7.10.0",
     "@prisma/client": "7.10.0",
     "mssql": "^12.7.2",
     "pg": "^8.23.0"

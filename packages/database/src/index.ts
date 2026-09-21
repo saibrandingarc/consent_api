@@ -1,3 +1,4 @@
+import { PrismaMssql } from '@prisma/adapter-mssql';
 import { PrismaClient } from '@prisma/client';
 import { deserializeJsonFields, serializeJsonFields } from './json-array';
 import * as Enums from './enums';
@@ -10,16 +11,11 @@ function createPrismaClient() {
     throw new Error('CM_DATABASE_URL is required');
   }
 
-  // Prisma 7 types omit datasourceUrl when the URL lives in prisma.config.ts,
-  // but the runtime constructor still accepts it.
-  const options = {
-    datasourceUrl,
+  const adapter = new PrismaMssql(datasourceUrl);
+  const client = new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  };
-
-  const client = new PrismaClient(
-    options as unknown as ConstructorParameters<typeof PrismaClient>[0],
-  );
+  });
 
   return client.$extends({
     query: {

@@ -93,6 +93,8 @@ done < <(node -e 'const p=require(process.argv[1]); Object.keys(p.dependencies||
 copy_pkg_tree uid
 copy_pkg_tree tslib
 copy_pkg_tree @prisma/client
+copy_pkg_tree @prisma/adapter-mssql
+copy_pkg_tree mssql
 rm -rf "${OUT}/node_modules/playwright" "${OUT}/node_modules/playwright-core" "${OUT}/node_modules/@playwright"
 
 SRC_CLIENT="$(find "${ROOT}/node_modules/.pnpm" -type d -path '*@prisma+client@*/node_modules/.prisma/client' | head -1 || true)"
@@ -130,5 +132,6 @@ test -f "${OUT}/host.js"
 test -f "${OUT}/dist/main.js"
 test -f "${OUT}/node_modules/@nestjs/core/package.json"
 test -d "${OUT}/node_modules/uid"
+test -f "${OUT}/node_modules/@prisma/adapter-mssql/package.json"
 test -f "${OUT}/node_modules.tar.gz"
 echo "assembled ${OUT}"
