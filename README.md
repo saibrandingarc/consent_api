@@ -24,11 +24,10 @@ pnpm dev   # http://localhost:4000/api/v1
 Node **22** Linux Web App `consentapi`:
 https://consentapi-abgrbph5cfccbxe0.eastus2-01.azurewebsites.net
 
-GitHub Actions zips **source only**. The app installs and compiles on App Service (`pnpm install` + `pnpm build`). Set these application settings (see `deploy/azure/env.example`):
+GitHub Actions zips **source only**. **Kudu** runs `deploy/azure/remote-build.sh` (`pnpm install` + `pnpm build`). Do not use Oryx. Set (see `deploy/azure/env.example`):
 
-- `ENABLE_ORYX_BUILD=true`
+- `ENABLE_ORYX_BUILD=false`
 - `SCM_DO_BUILD_DURING_DEPLOYMENT=true`
-- `CUSTOM_BUILD_COMMAND=bash deploy/azure/remote-build.sh`
 - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`
 - Startup command: `node host.js`
 

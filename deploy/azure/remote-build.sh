@@ -19,24 +19,32 @@ cd "${TARGET}"
 export CI=true
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 export NODE_ENV="${NODE_ENV:-production}"
-# prisma generate needs a URL; App Service injects CM_DATABASE_URL when set.
 export CM_DATABASE_URL="${CM_DATABASE_URL:-sqlserver://localhost:1433;database=cmp;user=sa;password=Placeholder_1;encrypt=true;trustServerCertificate=true}"
 
-# Kudu cannot symlink into /usr/local/bin (EACCES). Put Corepack shims in HOME.
-PNPM_BIN="${HOME}/.local/bin"
-mkdir -p "${PNPM_BIN}"
-export PATH="${PNPM_BIN}:${PATH}"
-export COREPACK_HOME="${HOME}/.cache/corepack"
-mkdir -p "${COREPACK_HOME}"
-set +e
-corepack enable --install-directory "${PNPM_BIN}"
-corepack prepare pnpm@12.5.1 --activate
-set -e
+# Kudu's default node is 18; the app requires 22.
+use_node22() {
+  local dir
+  shopt -s nullglob
+  for dir in /opt/nodejs/22*/bin /usr/local/n/versions/node/22*/bin; do
+    if [[ -x "${dir}/node" ]]; then
+      export PATH="${dir}:${PATH}"
+      echo "using ${dir}/node ($("${dir}/node" -v))"
+      return 0
+    fi
+  done
+  shopt -u nullglob
+  echo "warning: Node 22 not found on PATH, using $(node -v)" >&2
+}
+use_node22
 
-if ! command -v pnpm >/dev/null 2>&1; then
-  npm install --prefix "${HOME}/.cmp-pnpm" pnpm@12.5.1
-  export PATH="${HOME}/.cmp-pnpm/node_modules/.bin:${PATH}"
-fi
+# Do not use Corepack: Kudu cannot write /usr/local/bin and the HOME shim
+# is left without pnpm.cjs. Install a real pnpm under HOME.
+rm -f "${HOME}/.local/bin/pnpm" "${HOME}/.local/bin/pnpx" || true
+PNPM_PREFIX="${HOME}/.cmp-pnpm"
+mkdir -p "${PNPM_PREFIX}"
+npm install --prefix "${PNPM_PREFIX}" pnpm@12.5.1
+export PATH="${PNPM_PREFIX}/node_modules/.bin:${PATH}"
+hash -r
 
 echo "pnpm $(pnpm --version) node $(node --version) in ${PWD}"
 pnpm install --frozen-lockfile
