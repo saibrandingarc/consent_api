@@ -19,8 +19,8 @@ jobs:
         env:
           CM_DATABASE_URL: sqlserver://localhost:1433;database=cmp;user=sa;password=Placeholder_1;encrypt=true;trustServerCertificate=true
           PRISMA_GENERATE_SKIP_AUTOINSTALL: 'true'
-          WEB_URL: ${{ vars.WEB_URL || 'https://consent-web.azurewebsites.net' }}
-          ADMIN_URL: ${{ vars.ADMIN_URL || 'https://consent-admin.azurewebsites.net' }}
+          WEB_URL: ${{ vars.WEB_URL || 'https://consentmngtdev-gtfgamd4c9b4bbcr.eastus2-01.azurewebsites.net' }}
+          ADMIN_URL: ${{ vars.ADMIN_URL || 'https://consentadmin-fwb7gmeybmhwhyd0.eastus2-01.azurewebsites.net' }}
         run: |
           pnpm install
           pnpm build
@@ -40,6 +40,6 @@ jobs:
           bash deploy/azure/assemble.sh
       - uses: azure/webapps-deploy@v3.0.8
         with:
-          app-name: ${{ vars.AZURE_API_APP || 'consent-api' }}
+          app-name: ${{ vars.AZURE_API_APP || 'consentapi' }}
           package: azure-site-api
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
