@@ -5,10 +5,21 @@ import * as Enums from './enums';
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function createPrismaClient() {
-  const client = new PrismaClient({
-    datasourceUrl: process.env.CM_DATABASE_URL,
+  const datasourceUrl = process.env.CM_DATABASE_URL;
+  if (!datasourceUrl) {
+    throw new Error('CM_DATABASE_URL is required');
+  }
+
+  // Prisma 7 types omit datasourceUrl when the URL lives in prisma.config.ts,
+  // but the runtime constructor still accepts it.
+  const options = {
+    datasourceUrl,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  });
+  };
+
+  const client = new PrismaClient(
+    options as unknown as ConstructorParameters<typeof PrismaClient>[0],
+  );
 
   return client.$extends({
     query: {
