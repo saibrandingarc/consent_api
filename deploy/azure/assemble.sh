@@ -10,7 +10,7 @@ write_deploy_meta() {
 [config]
 SCM_DO_BUILD_DURING_DEPLOYMENT=false
 EOF
-  rm -f "${dir}/oryx-manifest.toml" "${dir}/node_modules.tar.gz" "${dir}/.gitignore"
+  rm -f "${dir}/.gitignore"
 }
 
 copy_real_pkg() {
@@ -32,6 +32,29 @@ copy_real_pkg() {
   mkdir -p "$(dirname "${dest_parent}/${name}")"
   cp -aL "$(dirname "${pkg_json}")" "${dest_parent}/${name}"
   echo "real copy ${name} -> ${dest_parent}/${name}"
+}
+
+declare -A COPIED_PKGS=()
+
+copy_pkg_tree() {
+  local name="$1"
+  if [[ -n "${COPIED_PKGS[$name]:-}" ]]; then
+    return 0
+  fi
+  COPIED_PKGS[$name]=1
+  copy_real_pkg "$name" "${OUT}/node_modules" optional
+  local pkg="${OUT}/node_modules/${name}/package.json"
+  if [[ ! -f "${pkg}" ]]; then
+    return 0
+  fi
+  local dep
+  while IFS= read -r dep; do
+    [[ -z "${dep}" ]] && continue
+    case "${dep}" in
+      @cmp/*) continue ;;
+    esac
+    copy_pkg_tree "${dep}"
+  done < <(node -e 'const p=require(process.argv[1]); Object.keys(p.dependencies||{}).forEach((k)=>console.log(k));' "${pkg}")
 }
 
 deref_node_modules() {
@@ -61,15 +84,23 @@ cp -a "${ROOT}/azure-api/." "${OUT}/"
 rm -rf "${OUT}/dist"
 cp -a "${ROOT}/dist" "${OUT}/dist"
 deref_node_modules "${OUT}"
-copy_real_pkg tslib "${OUT}/node_modules"
-copy_real_pkg @nestjs/core "${OUT}/node_modules"
-copy_real_pkg @prisma/client "${OUT}/node_modules"
+
+while IFS= read -r dep; do
+  [[ -z "${dep}" ]] && continue
+  copy_pkg_tree "${dep}"
+done < <(node -e 'const p=require(process.argv[1]); Object.keys(p.dependencies||{}).forEach((k)=>{ if(!k.startsWith("@cmp/")) console.log(k); });' "${ROOT}/package.json")
+
+copy_pkg_tree uid
+copy_pkg_tree tslib
+copy_pkg_tree @prisma/client
+
 SRC_CLIENT="$(find "${ROOT}/node_modules/.pnpm" -type d -path '*@prisma+client@*/node_modules/.prisma/client' | head -1 || true)"
 if [[ -n "${SRC_CLIENT}" ]]; then
   mkdir -p "${OUT}/node_modules/.prisma"
   rm -rf "${OUT}/node_modules/.prisma/client"
   cp -R "${SRC_CLIENT}" "${OUT}/node_modules/.prisma/client"
 fi
+
 cat > "${OUT}/package.json" <<'EOF'
 {
   "name": "consent_api",
@@ -79,8 +110,22 @@ cat > "${OUT}/package.json" <<'EOF'
   "engines": { "node": "22.x" }
 }
 EOF
+
 write_deploy_meta "${OUT}"
+
+# Azure Linux Oryx extracts wwwroot/node_modules.tar.gz to /node_modules and
+# moves wwwroot/node_modules aside. Zip deploy does not delete an old tar, so
+# we must overwrite it with a complete tree (including uid for Nest ESM).
+rm -f "${OUT}/node_modules.tar.gz"
+tar -C "${OUT}/node_modules" -czf "${OUT}/node_modules.tar.gz" .
+cat > "${OUT}/oryx-manifest.toml" <<'EOF'
+PlatformName="nodejs"
+NodeVersion="22"
+CompressDestinationDir="true"
+EOF
+
 test -f "${OUT}/dist/main.js"
 test -f "${OUT}/node_modules/@nestjs/core/package.json"
-test -f "${OUT}/node_modules/tslib/package.json"
+test -d "${OUT}/node_modules/uid"
+test -f "${OUT}/node_modules.tar.gz"
 echo "assembled ${OUT}"
