@@ -22,8 +22,21 @@ export NODE_ENV="${NODE_ENV:-production}"
 # prisma generate needs a URL; App Service injects CM_DATABASE_URL when set.
 export CM_DATABASE_URL="${CM_DATABASE_URL:-sqlserver://localhost:1433;database=cmp;user=sa;password=Placeholder_1;encrypt=true;trustServerCertificate=true}"
 
-corepack enable
+# Kudu cannot symlink into /usr/local/bin (EACCES). Put Corepack shims in HOME.
+PNPM_BIN="${HOME}/.local/bin"
+mkdir -p "${PNPM_BIN}"
+export PATH="${PNPM_BIN}:${PATH}"
+export COREPACK_HOME="${HOME}/.cache/corepack"
+mkdir -p "${COREPACK_HOME}"
+set +e
+corepack enable --install-directory "${PNPM_BIN}"
 corepack prepare pnpm@12.5.1 --activate
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  npm install --prefix "${HOME}/.cmp-pnpm" pnpm@12.5.1
+  export PATH="${HOME}/.cmp-pnpm/node_modules/.bin:${PATH}"
+fi
 
 echo "pnpm $(pnpm --version) node $(node --version) in ${PWD}"
 pnpm install --frozen-lockfile
