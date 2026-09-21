@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "sqlserver"
-  url      = env("CM_DATABASE_URL")
 }
 
 
