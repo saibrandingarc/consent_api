@@ -33,8 +33,8 @@ export class AuthController {
     return ok({
       provider: 'auth0',
       configured: config.configured,
-      domain: config.configured ? config.domain : null,
-      audience: config.configured ? config.audience : null,
+      domain: config.domain || null,
+      audience: config.audience || null,
       auth0Enabled: AUTH0_CONFIG.enabled,
     });
   }

@@ -17,16 +17,25 @@ export interface Auth0Profile {
 
 @Injectable()
 export class Auth0Service {
-  private readonly jwks = AUTH0_CONFIG.enabled
-    ? jwksClient({
+  private jwks: ReturnType<typeof jwksClient> | null = null;
+
+  private getJwks(): ReturnType<typeof jwksClient> | null {
+    if (!AUTH0_CONFIG.enabled || !AUTH0_CONFIG.domain) {
+      return null;
+    }
+    if (!this.jwks) {
+      this.jwks = jwksClient({
         jwksUri: `https://${AUTH0_CONFIG.domain}/.well-known/jwks.json`,
         cache: true,
         rateLimit: true,
-      })
-    : null;
+      });
+    }
+    return this.jwks;
+  }
 
   async verifyIdToken(idToken: string): Promise<Auth0Profile> {
-    if (!AUTH0_CONFIG.enabled || !this.jwks) {
+    const client = this.getJwks();
+    if (!AUTH0_CONFIG.enabled || !client) {
       throw new BadRequestException({
         code: 'AUTH0_NOT_CONFIGURED',
         message: 'Auth0 is not configured on the server',
@@ -42,10 +51,20 @@ export class Auth0Service {
     }
 
     const signingKey = await this.getSigningKey(decoded.header.kid);
-    const payload = jwt.verify(idToken, signingKey, {
-      issuer: AUTH0_CONFIG.issuerUrl,
-      algorithms: ['RS256'],
-    }) as jwt.JwtPayload;
+    let payload: jwt.JwtPayload;
+    try {
+      const issuer = AUTH0_CONFIG.issuerUrl;
+      payload = jwt.verify(idToken, signingKey, {
+        issuer: issuer ? [issuer, issuer.replace(/\/$/, '')] : undefined,
+        algorithms: ['RS256'],
+      }) as jwt.JwtPayload;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid Auth0 token';
+      throw new UnauthorizedException({
+        code: 'TOKEN_INVALID',
+        message: `Auth0 token verification failed: ${message}`,
+      });
+    }
 
     const clientId = AUTH0_CONFIG.clientId;
     const aud = payload.aud;
@@ -103,9 +122,14 @@ export class Auth0Service {
 
   private getSigningKey(kid: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.jwks!.getSigningKey(kid, (error, key) => {
+      this.getJwks()!.getSigningKey(kid, (error, key) => {
         if (error || !key) {
-          reject(error ?? new Error('Signing key not found'));
+          reject(
+            new UnauthorizedException({
+              code: 'TOKEN_INVALID',
+              message: error instanceof Error ? error.message : 'Signing key not found',
+            }),
+          );
           return;
         }
         resolve(key.getPublicKey());

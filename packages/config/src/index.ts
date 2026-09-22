@@ -81,11 +81,15 @@ export const AUTH0_CONFIG = {
         (process.env.AUTH0_ISSUER_URL?.trim() || process.env.AUTH0_DOMAIN?.trim()),
     );
   },
-  domain: process.env.AUTH0_DOMAIN?.trim() ?? '',
+  get domain() {
+    return (process.env.AUTH0_DOMAIN ?? '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  },
   get clientId() {
     return process.env.CM_AUTH0_CLIENT_ID?.trim() || process.env.AUTH0_CLIENT_ID?.trim() || '';
   },
-  audience: process.env.AUTH0_AUDIENCE?.trim() ?? '',
+  get audience() {
+    return process.env.AUTH0_AUDIENCE?.trim() ?? '';
+  },
   get issuerUrl() {
     const explicit = process.env.AUTH0_ISSUER_URL?.trim() || process.env.AUTH0_ISSUER_BASE_URL?.trim();
     if (explicit) return explicit.endsWith('/') ? explicit : `${explicit}/`;

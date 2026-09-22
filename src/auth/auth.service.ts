@@ -95,10 +95,30 @@ export class AuthService {
     idToken: string,
     meta?: { ipAddress?: string; userAgent?: string },
   ): Promise<AuthTokens & { isNewUser: boolean }> {
-    const profile = await this.auth0Service.verifyIdToken(idToken);
-    const { user, isNewUser } = await this.upsertAuth0User(profile, meta);
-    const tokens = await this.issueTokens(user.id, meta);
-    return { ...tokens, isNewUser };
+    const started = Date.now();
+    try {
+      const profile = await this.auth0Service.verifyIdToken(idToken);
+      console.log(`[cmp-api] auth0 verifyIdToken ${Date.now() - started}ms`);
+      const { user, isNewUser } = await this.upsertAuth0User(profile, meta);
+      console.log(`[cmp-api] auth0 upsertUser ${Date.now() - started}ms`);
+      const tokens = await this.issueTokens(user.id, meta);
+      console.log(`[cmp-api] auth0 issueTokens ${Date.now() - started}ms`);
+      return { ...tokens, isNewUser };
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      console.error(`[cmp-api] auth0 login failed after ${Date.now() - started}ms`, error);
+      const message = error instanceof Error ? error.message : 'Auth0 login failed';
+      throw new UnauthorizedException({
+        code: 'AUTH0_LOGIN_FAILED',
+        message,
+      });
+    }
   }
 
   async ensureFromAuth0Claims(claims: Auth0TokenClaims): Promise<CurrentUser> {
